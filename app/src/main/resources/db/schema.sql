@@ -1,6 +1,6 @@
 pragma foreign_keys = on;
 
-create table perfil (
+create table if not exists perfil (
     id integer primary key autoincrement,
     nome text not null,
     email text not null unique,
@@ -15,20 +15,20 @@ create table perfil (
     criado_em text default current_timestamp
 );
 
-create table doador (
+create table if not exists doador (
     cpf text primary key,
     perfil_id integer not null unique,
     data_nascimento text,
     foreign key (perfil_id) references perfil(id) on delete cascade
 );
 
-create table receptor (
+create table if not exists receptor (
     cnpj text primary key,
     perfil_id integer not null unique,
     foreign key (perfil_id) references perfil(id) on delete cascade
 );
 
-create table medicamento (
+create table if not exists medicamento (
     id integer primary key autoincrement,
     doador_cpf text not null,
     nome text not null,
@@ -40,7 +40,7 @@ create table medicamento (
     foreign key (doador_cpf) references doador(cpf) on delete cascade
 );
 
-create table doacao (
+create table if not exists doacao (
     codigo integer primary key autoincrement,
     doador_cpf text not null,
     receptor_cnpj text not null,
