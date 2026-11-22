@@ -52,26 +52,6 @@ public class DatabaseController {
 		}
 	}
 
-	public void insertPerfil(String nome, String email, String senha, String tipoPerfil, String telefone,
-							 String cep, String estado, String cidade, String rua, String numero) throws SQLException {
-		String sql = "insert into perfil (nome, email, senha_hash, tipo_perfil, telefone, cep, estado, cidade, rua, numero)"
-				+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-		try (Connection con = connect(); PreparedStatement statement = con.prepareStatement(sql)) {
-			statement.setString(1, nome);
-			statement.setString(2, email);
-			statement.setString(3, sha256(senha));
-			statement.setString(4, tipoPerfil);
-			statement.setString(5, telefone);
-			statement.setString(6, cep);
-			statement.setString(7, estado);
-			statement.setString(8, cidade);
-			statement.setString(9, rua);
-			statement.setString(10, numero);
-			statement.executeUpdate();
-		}
-	}
-
 	private Connection connect() throws SQLException {
 		Connection con = DriverManager.getConnection("jdbc:sqlite:app.db");
 
@@ -82,13 +62,31 @@ public class DatabaseController {
 		return con;
 	}
 
+	private static final String CONSULTA_PERFIL = "select p.id, p.nome, p.email, p.tipo_perfil, p.telefone, p.cep,"
+			+ " p.estado, p.cidade, p.rua, p.numero, coalesce(d.cpf, r.cnpj, '') as documento"
+			+ " from perfil p"
+			+ " left join doador d on d.perfil_id = p.id"
+			+ " left join receptor r on r.perfil_id = p.id";
+
+	public Perfil autenticar(String email, String senha) throws SQLException {
+		String sql = CONSULTA_PERFIL + " where p.email = ? and p.senha_hash = ?";
+
+		try (Connection con = connect(); PreparedStatement statement = con.prepareStatement(sql)) {
+			statement.setString(1, email);
+			statement.setString(2, sha256(senha));
+
+			try (ResultSet result = statement.executeQuery()) {
+				if (result.next()) {
+					return montarPerfil(result);
+				}
+
+				return null;
+			}
+		}
+	}
+
 	public List<Perfil> listarPerfis() throws SQLException {
-		String sql = "select p.id, p.nome, p.email, p.tipo_perfil, p.telefone, p.cep, p.estado, p.cidade, p.rua, p.numero,"
-				+ " coalesce(d.cpf, r.cnpj, '') as documento"
-				+ " from perfil p"
-				+ " left join doador d on d.perfil_id = p.id"
-				+ " left join receptor r on r.perfil_id = p.id"
-				+ " order by p.id";
+		String sql = CONSULTA_PERFIL + " order by p.id";
 
 		List<Perfil> perfis = new ArrayList<>();
 

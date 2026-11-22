@@ -18,7 +18,7 @@ public class App extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		DatabaseController dbControler = new DatabaseController("schema.sql");
 		BorderPane root = dbControler.databaseExists()
-				? new LoginWindow()
+				? new LoginWindow(primaryStage, dbControler)
 				: new RegisterWindow(primaryStage, dbControler);
 
 		Scene mainWindow = new Scene(root);

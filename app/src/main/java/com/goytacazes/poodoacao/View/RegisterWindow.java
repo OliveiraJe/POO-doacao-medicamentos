@@ -1,6 +1,7 @@
 package com.goytacazes.poodoacao.View;
 
 import com.goytacazes.poodoacao.Controller.DatabaseController;
+import com.goytacazes.poodoacao.Model.Perfil;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -25,6 +26,7 @@ public class RegisterWindow extends BorderPane {
 	Label emailLabel = new Label("E-mail");
 	Label senhaLabel = new Label("Senha");
 	Label tipoLabel = new Label("Perfil");
+	Label documentoLabel = new Label("CPF");
 	Label telefoneLabel = new Label("Telefone");
 	Label cepLabel = new Label("CEP");
 	Label estadoLabel = new Label("Estado");
@@ -37,6 +39,7 @@ public class RegisterWindow extends BorderPane {
 	TextField emailField = new TextField();
 	PasswordField senhaField = new PasswordField();
 	ChoiceBox<String> tipoField = new ChoiceBox<>();
+	TextField documentoField = new TextField();
 	TextField telefoneField = new TextField();
 	TextField cepField = new TextField();
 	TextField estadoField = new TextField();
@@ -56,6 +59,8 @@ public class RegisterWindow extends BorderPane {
 		tipoField.setItems(FXCollections.observableArrayList("doador", "receptor"));
 		tipoField.setValue("doador");
 		tipoField.setMaxWidth(Double.MAX_VALUE);
+		tipoField.valueProperty().addListener((obs, antigo, novo) ->
+				documentoLabel.setText("receptor".equals(novo) ? "CNPJ" : "CPF"));
 
 		cadastrarBtnHB.setAlignment(Pos.CENTER);
 		cadastrarBtnHB.getChildren().add(cadastrarBtn);
@@ -70,6 +75,7 @@ public class RegisterWindow extends BorderPane {
 				emailLabel, emailField,
 				senhaLabel, senhaField,
 				tipoLabel, tipoField,
+				documentoLabel, documentoField,
 				telefoneLabel, telefoneField,
 				cepLabel, cepField,
 				estadoLabel, estadoField,
@@ -85,19 +91,24 @@ public class RegisterWindow extends BorderPane {
 
 	private void cadastrar() {
 		if (nomeField.getText().isBlank() || emailField.getText().isBlank() || senhaField.getText().isBlank()
-				|| telefoneField.getText().isBlank() || cepField.getText().isBlank() || estadoField.getText().isBlank()
-				|| cidadeField.getText().isBlank() || ruaField.getText().isBlank() || numeroField.getText().isBlank()) {
+				|| documentoField.getText().isBlank() || telefoneField.getText().isBlank()
+				|| cepField.getText().isBlank() || estadoField.getText().isBlank()
+				|| cidadeField.getText().isBlank() || ruaField.getText().isBlank()
+				|| numeroField.getText().isBlank()) {
 			erroLabel.setText("Preencha todos os campos");
 			return;
 		}
 
+		Perfil perfil = new Perfil(0, nomeField.getText().trim(), emailField.getText().trim(), tipoField.getValue(),
+				documentoField.getText().trim(), telefoneField.getText().trim(), cepField.getText().trim(),
+				estadoField.getText().trim(), cidadeField.getText().trim(), ruaField.getText().trim(),
+				numeroField.getText().trim());
+
 		try {
 			databaseController.createDatabase();
-			databaseController.insertPerfil(nomeField.getText(), emailField.getText(), senhaField.getText(),
-					tipoField.getValue(), telefoneField.getText(), cepField.getText(), estadoField.getText(),
-					cidadeField.getText(), ruaField.getText(), numeroField.getText());
+			databaseController.criarPerfil(perfil, senhaField.getText());
 
-			stage.setScene(new Scene(new LoginWindow()));
+			stage.setScene(new Scene(new LoginWindow(stage, databaseController)));
 		} catch (Exception e) {
 			erroLabel.setText(e.getMessage());
 		}
