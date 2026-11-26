@@ -6,14 +6,16 @@ import com.goytacazes.poodoacao.Model.Perfil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -49,6 +51,7 @@ public class RegisterWindow extends BorderPane {
 
 	Button cadastrarBtn = new Button("Cadastrar");
 
+	GridPane formulario = new GridPane();
 	VBox registerVB = new VBox(4);
 	HBox cadastrarBtnHB = new HBox();
 
@@ -70,47 +73,67 @@ public class RegisterWindow extends BorderPane {
 		erroLabel.setWrapText(true);
 
 		registerVB.setPadding(new Insets(16));
-		registerVB.getChildren().addAll(headerLabel,
-				nomeLabel, nomeField,
-				emailLabel, emailField,
-				senhaLabel, senhaField,
-				tipoLabel, tipoField,
-				documentoLabel, documentoField,
-				telefoneLabel, telefoneField,
-				cepLabel, cepField,
-				estadoLabel, estadoField,
-				cidadeLabel, cidadeField,
-				ruaLabel, ruaField,
-				numeroLabel, numeroField,
-				cadastrarBtnHB, erroLabel);
+		// campos em duas colunas para a tela caber em monitores menores
+		formulario.setHgap(12);
+		formulario.setVgap(10);
+		formulario.addRow(0, tipoLabel, tipoField, documentoLabel, documentoField);
+		formulario.addRow(1, nomeLabel, nomeField, emailLabel, emailField);
+		formulario.addRow(2, senhaLabel, senhaField, telefoneLabel, telefoneField);
+		formulario.addRow(3, cepLabel, cepField, estadoLabel, estadoField);
+		formulario.addRow(4, cidadeLabel, cidadeField, ruaLabel, ruaField);
+		formulario.addRow(5, numeroLabel, numeroField);
+
+		ColumnConstraints rotulo1 = new ColumnConstraints(70);
+		ColumnConstraints campo1 = new ColumnConstraints();
+		campo1.setHgrow(Priority.ALWAYS);
+		ColumnConstraints rotulo2 = new ColumnConstraints(70);
+		ColumnConstraints campo2 = new ColumnConstraints();
+		campo2.setHgrow(Priority.ALWAYS);
+		formulario.getColumnConstraints().addAll(rotulo1, campo1, rotulo2, campo2);
+
+		registerVB.setSpacing(10);
+		registerVB.getChildren().addAll(headerLabel, formulario, cadastrarBtnHB, erroLabel);
 
 		cadastrarBtn.setOnAction(e -> cadastrar());
 
 		this.setCenter(registerVB);
 	}
 
+
 	private void cadastrar() {
-		if (nomeField.getText().isBlank() || emailField.getText().isBlank() || senhaField.getText().isBlank()
-				|| documentoField.getText().isBlank() || telefoneField.getText().isBlank()
-				|| cepField.getText().isBlank() || estadoField.getText().isBlank()
-				|| cidadeField.getText().isBlank() || ruaField.getText().isBlank()
-				|| numeroField.getText().isBlank()) {
-			erroLabel.setText("Preencha todos os campos");
+		if (tipoField.getValue() == null || nomeField.getText().isBlank() || emailField.getText().isBlank()
+				|| senhaField.getText().isBlank() || documentoField.getText().isBlank()
+				|| telefoneField.getText().isBlank() || cepField.getText().isBlank()
+				|| estadoField.getText().isBlank() || cidadeField.getText().isBlank()
+				|| ruaField.getText().isBlank() || numeroField.getText().isBlank()) {
+			erroLabel.setText("Preencha todos os campos.");
+			return;
+		}
+
+		String documento = documentoField.getText().replaceAll("\\D", "");
+		int tamanhoDocumento = "doador".equals(tipoField.getValue()) ? 11 : 14;
+		if (documento.length() != tamanhoDocumento) {
+			erroLabel.setText("Informe um " + ("doador".equals(tipoField.getValue()) ? "CPF" : "CNPJ")
+					+ " com " + tamanhoDocumento + " dígitos.");
+			return;
+		}
+		if (!emailField.getText().trim().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+			erroLabel.setText("Informe um e-mail válido.");
 			return;
 		}
 
 		Perfil perfil = new Perfil(0, nomeField.getText().trim(), emailField.getText().trim(), tipoField.getValue(),
-				documentoField.getText().trim(), telefoneField.getText().trim(), cepField.getText().trim(),
+				documento, telefoneField.getText().trim(), cepField.getText().trim(),
 				estadoField.getText().trim(), cidadeField.getText().trim(), ruaField.getText().trim(),
 				numeroField.getText().trim());
 
 		try {
 			databaseController.createDatabase();
 			databaseController.criarPerfil(perfil, senhaField.getText());
-
-			stage.setScene(new Scene(new LoginWindow(stage, databaseController)));
+			Tela.abrirAjustada(stage, new LoginWindow(stage, databaseController), Tela.LOGIN_L);
 		} catch (Exception e) {
 			erroLabel.setText(e.getMessage());
 		}
 	}
+
 }

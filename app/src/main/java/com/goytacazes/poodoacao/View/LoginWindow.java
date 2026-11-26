@@ -20,13 +20,14 @@ public class LoginWindow extends BorderPane {
 
 	Label headerLabel = new Label("Painel Doação");
 	Label userLabel = new Label("E-mail");
-	Label passwordLabel = new Label("Password");
+	Label passwordLabel = new Label("Senha");
 	Label erroLabel = new Label();
 
 	TextField usernameField = new TextField();
 	PasswordField passwordField = new PasswordField();
 
-	Button loginBtn = new Button("Login");
+	Button loginBtn = new Button("Entrar");
+	Button cadastrarBtn = new Button("Criar cadastro");
 
 	VBox loginVB = new VBox(4);
 	HBox loginBtnHB = new HBox();
@@ -36,7 +37,8 @@ public class LoginWindow extends BorderPane {
 		this.databaseController = databaseController;
 
 		loginBtnHB.setAlignment(Pos.CENTER);
-		loginBtnHB.getChildren().add(loginBtn);
+		loginBtnHB.getChildren().addAll(loginBtn, cadastrarBtn);
+		loginBtnHB.setSpacing(10);
 
 		headerLabel.setAlignment(Pos.CENTER);
 		headerLabel.setMaxWidth(Double.MAX_VALUE);
@@ -48,6 +50,8 @@ public class LoginWindow extends BorderPane {
 
 		loginBtn.setOnAction(e -> entrar());
 		passwordField.setOnAction(e -> entrar());
+		cadastrarBtn.setOnAction(e ->
+				Tela.abrirAjustada(stage, new RegisterWindow(stage, databaseController), Tela.CADASTRO_L));
 
 		this.setCenter(loginVB);
 	}
@@ -62,9 +66,9 @@ public class LoginWindow extends BorderPane {
 			}
 
 			if (perfil.getTipoPerfil().equals("doador")) {
-				new DonateWindow().start(stage);
+				new DonateWindow(databaseController, perfil).start(stage);
 			} else {
-				new ReceptorWindow().start(stage);
+				new ReceptorWindow(databaseController, perfil).start(stage);
 			}
 		} catch (Exception e) {
 			erroLabel.setText(e.getMessage());

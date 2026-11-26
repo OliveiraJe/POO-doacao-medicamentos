@@ -33,7 +33,7 @@ public class Perfil {
         this.numero = new SimpleStringProperty(numero);
     }
 
-    // Properties (usadas pelas TableViews do JavaFX)
+    // Properties
     public IntegerProperty idProperty() { return id; }
     public StringProperty nomeProperty() { return nome; }
     public StringProperty emailProperty() { return email; }

@@ -208,7 +208,7 @@ public class DatabaseController {
 
 	public List<Medicamento> listarMedicamentos() throws SQLException {
 		String sql = "select id, doador_cpf, nome, descricao, lote, quantidade, validade from medicamento"
-				+ " where quantidade > 0 order by nome";
+				+ " where quantidade > 0 and validade >= date('now') order by nome";
 
 		List<Medicamento> medicamentos = new ArrayList<>();
 
@@ -228,6 +228,65 @@ public class DatabaseController {
 		}
 
 		return medicamentos;
+	}
+
+	
+	public List<Medicamento> listarMedicamentosDoador(String cpf) throws SQLException {
+		List<Medicamento> medicamentos = new ArrayList<>();
+		String sql = "select id, doador_cpf, nome, descricao, lote, quantidade, validade from medicamento where doador_cpf = ? order by nome";
+		try (Connection con = connect(); PreparedStatement statement = con.prepareStatement(sql)) {
+			statement.setString(1, cpf);
+			try (ResultSet result = statement.executeQuery()) {
+				while (result.next()) {
+					medicamentos.add(new Medicamento(result.getLong("id"), result.getString("doador_cpf"),
+							result.getString("nome"), result.getString("descricao"), result.getString("lote"),
+							result.getInt("quantidade"), LocalDate.parse(result.getString("validade"))));
+				}
+			}
+		}
+		return medicamentos;
+	}
+
+	public void cadastrarMedicamento(Medicamento medicamento) throws SQLException {
+		String sql = "insert into medicamento (doador_cpf, nome, descricao, lote, quantidade, validade) values (?, ?, ?, ?, ?, ?)";
+		try (Connection con = connect(); PreparedStatement statement = con.prepareStatement(sql)) {
+			statement.setString(1, medicamento.getDoadorCpf());
+			statement.setString(2, medicamento.getNome());
+			statement.setString(3, medicamento.getDescricao());
+			statement.setString(4, medicamento.getLote());
+			statement.setInt(5, medicamento.getQuantidade());
+			statement.setString(6, medicamento.getValidade().toString());
+			statement.executeUpdate();
+		}
+	}
+
+	public void atualizarMedicamento(Medicamento medicamento, String cpf) throws SQLException {
+		String sql = "update medicamento set nome = ?, descricao = ?, lote = ?, quantidade = ?, validade = ?"
+				+ " where id = ? and doador_cpf = ?";
+		try (Connection con = connect(); PreparedStatement statement = con.prepareStatement(sql)) {
+			statement.setString(1, medicamento.getNome());
+			statement.setString(2, medicamento.getDescricao());
+			statement.setString(3, medicamento.getLote());
+			statement.setInt(4, medicamento.getQuantidade());
+			statement.setString(5, medicamento.getValidade().toString());
+			statement.setLong(6, medicamento.getId());
+			statement.setString(7, cpf);
+			if (statement.executeUpdate() == 0) {
+				throw new SQLException("Não foi possível atualizar o medicamento.");
+			}
+		}
+	}
+
+	public void removerMedicamento(long id, String cpf) throws SQLException {
+		String sql = "delete from medicamento where id = ? and doador_cpf = ? and not exists (select 1 from doacao where medicamento_id = ?)";
+		try (Connection con = connect(); PreparedStatement statement = con.prepareStatement(sql)) {
+			statement.setLong(1, id);
+			statement.setString(2, cpf);
+			statement.setLong(3, id);
+			if (statement.executeUpdate() == 0) {
+				throw new SQLException("Não foi possível remover. O medicamento pode possuir doações registradas.");
+			}
+		}
 	}
 
 	public void registrarDoacao(long medicamentoId, String receptorCnpj, int quantidade) throws SQLException {
