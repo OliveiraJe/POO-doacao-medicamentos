@@ -45,4 +45,4 @@ O banco `app.db` é criado no diretório atual na primeira execução, a partir 
 
 ## Vídeo de apresentação
 
-Link do YouTube (público ou não listado): _(a preencher)_
+Link do YouTube: [https://youtu.be/GtCV63OxwMU]
